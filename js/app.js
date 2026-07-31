@@ -1,92 +1,87 @@
 /**
- * Smart Mirror Assistant - Step 1 Main Application Entry
- * Fetches OpenWeatherMap API data based on current Geolocation or fallback city
- * and renders Header, Dot Matrix Indicator, and Weather Summary Report.
+ * Smart Mirror Assistant - Step 2 Application Orchestrator
+ * Integrates Weather Service, Gemini API Vision Analysis (gemini-flash-latest),
+ * Webcam Viewfinder, Virtual Neopixel LED Sync, and Outfit Gallery.
  */
 
 import { fetchCurrentWeather, getUserCoordinates } from './services/weatherService.js';
+import { analyzeOutfitWithGemini } from './services/geminiService.js';
+import { fetchRecommendedOutfits } from './services/imageService.js';
+
 import { HeaderComponent } from './components/Header.js';
 import { VirtualIndicatorsComponent } from './components/VirtualIndicators.js';
+import { WebcamViewfinderComponent } from './components/WebcamViewfinder.js';
+import { DiagnosisPanelComponent } from './components/DiagnosisPanel.js';
+import { OutfitGalleryComponent } from './components/OutfitGallery.js';
 
 class SmartMirrorApp {
   constructor() {
     this.weatherData = null;
     this.coords = null;
+    this.diagnosisData = null;
+    this.recommendedOutfits = [];
 
-    // Instantiate Step 1 Components
+    // Instantiate Step 2 UI Components
     this.header = new HeaderComponent('headerSlot');
     this.indicators = new VirtualIndicatorsComponent('virtualIndicatorsSlot');
+    this.viewfinder = new WebcamViewfinderComponent('viewfinderSlot', (base64Image) => this.handleScan(base64Image));
+    this.diagnosisPanel = new DiagnosisPanelComponent('diagnosisSlot');
+    this.gallery = new OutfitGalleryComponent('gallerySlot');
   }
 
   async init() {
-    console.log('[SmartMirrorApp] Initializing Step 1: Geolocation Weather Dashboard...');
+    console.log('[SmartMirrorApp] Initializing Step 2: Webcam & Gemini AI Vision Analysis...');
 
     // 1. Initial Render with Placeholders
     this.header.render(null);
     this.indicators.render('Clear');
+    this.viewfinder.render();
+    this.diagnosisPanel.render(null);
+    this.gallery.render([]);
 
-    // 2. Fetch User Geolocation Coordinates (if permission granted)
+    // 2. Resolve Geolocation & Fetch Live Weather
     this.coords = await getUserCoordinates();
-    if (this.coords) {
-      console.log(`[SmartMirrorApp] Detected User Coordinates: Lat ${this.coords.lat}, Lon ${this.coords.lon}`);
-    } else {
-      console.log('[SmartMirrorApp] Using Fallback City Location (Seoul)');
-    }
-
-    // 3. Fetch Weather Data for Coordinates
-    await this.refreshWeather();
-
-    // 4. Bind Refresh Button Event Handler
-    const btnRefresh = document.getElementById('btnRefreshLocation');
-    if (btnRefresh) {
-      btnRefresh.addEventListener('click', async () => {
-        btnRefresh.disabled = true;
-        btnRefresh.textContent = '🔄 위치 수신 중...';
-        this.coords = await getUserCoordinates();
-        await this.refreshWeather();
-        btnRefresh.disabled = false;
-        btnRefresh.textContent = '🎯 내 현재 위치 날씨 감지';
-      });
-    }
-  }
-
-  async refreshWeather() {
     this.weatherData = await fetchCurrentWeather(this.coords);
-    
-    // Update Header & Dot Matrix Indicators
+
+    // 3. Update Header & Dot Matrix Indicator
     this.header.updateWeather(this.weatherData);
     this.indicators.updateDotMatrix(this.weatherData.condition);
 
-    // Update Main Weather Detail Cards
-    this.updateWeatherDetailCards(this.weatherData);
+    // 4. Fetch Recommended Outfits for current weather
+    this.recommendedOutfits = await fetchRecommendedOutfits(this.weatherData.condition, this.weatherData.temp);
+    this.gallery.update(this.recommendedOutfits);
   }
 
-  updateWeatherDetailCards(data) {
-    if (!data) return;
+  async handleScan(base64Image) {
+    console.log('[SmartMirrorApp] Outfit Scan Triggered. Analyzing with Google Gemini API...');
 
-    const summaryEl = document.getElementById('weatherSummaryText');
-    const tempEl = document.getElementById('detailTemp');
-    const feelsEl = document.getElementById('detailFeels');
-    const humidityEl = document.getElementById('detailHumidity');
-    const cityEl = document.getElementById('detailCityName');
-    const updatedTimeEl = document.getElementById('lastUpdatedTime');
+    // 1. Send Base64 image & Weather to Gemini API Vision Model
+    this.diagnosisData = await analyzeOutfitWithGemini(base64Image, this.weatherData);
 
-    if (summaryEl) {
-      summaryEl.innerHTML = `
-        현재 <strong>${data.city}</strong>의 날씨는 <strong>${data.icon} ${data.description}</strong> 상태입니다. 
-        기온은 <strong>${data.temp}°C</strong>이며 체감 온도는 <strong>${data.feelsLike}°C</strong>로 느껴집니다.
-      `;
+    // 2. Update AI Diagnosis Panel & Sync 4-Segment Neopixel LED Bar
+    this.diagnosisPanel.update(this.diagnosisData);
+    this.indicators.updateNeopixel(this.diagnosisData.colors);
+
+    // 3. Play Warning Beep Audio if Warning Status
+    if (this.diagnosisData.status === 'warning') {
+      this.playWarningBeep();
     }
+  }
 
-    if (tempEl) tempEl.textContent = `${data.temp}°C`;
-    if (feelsEl) feelsEl.textContent = `${data.feelsLike}°C`;
-    if (humidityEl) humidityEl.textContent = `${data.humidity}%`;
-    if (cityEl) cityEl.textContent = data.city;
-
-    if (updatedTimeEl) {
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-      updatedTimeEl.textContent = `최근 업데이트: ${timeStr}`;
+  playWarningBeep() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 tone
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    } catch (e) {
+      console.warn('[SmartMirrorApp] Web Audio warning beep error:', e);
     }
   }
 }

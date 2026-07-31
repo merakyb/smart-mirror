@@ -1,6 +1,7 @@
 /**
- * Webcam Viewfinder Component
- * Handles MediaDevices stream, framing overlay, countdown timer, and flash capture
+ * Webcam Viewfinder Component (Step 2)
+ * Manages live video stream, target alignment guide, 3s countdown, camera flash effect,
+ * and base64 image capture for Gemini API Vision Analysis.
  */
 
 export class WebcamViewfinderComponent {
@@ -15,26 +16,36 @@ export class WebcamViewfinderComponent {
     if (!this.container) return;
 
     this.container.innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 1rem; align-items: center; width: 100%;">
-        <!-- Viewfinder -->
+      <div class="glass-panel animate-fade-in" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; align-items: center; width: 100%;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+            <span>📷</span> 거울 뷰파인더 (실시간 웹캠)
+          </h3>
+          <span class="pill-badge badge-good" style="font-size: 0.7rem; font-family: var(--font-mono);">
+            LIVE WEBCAM STREAM
+          </span>
+        </div>
+
+        <!-- Viewfinder Box -->
         <div class="viewfinder-box" id="viewfinderBox">
           <video id="mirrorVideo" class="viewfinder-video" autoplay playsinline muted></video>
           <div class="viewfinder-overlay"></div>
           <div class="scanline-effect"></div>
           
-          <!-- Countdown Overlay (Hidden by default) -->
+          <!-- Countdown Overlay -->
           <div class="countdown-overlay" id="countdownOverlay" style="display: none;">3</div>
           
-          <!-- AI Loading Overlay (Hidden by default) -->
-          <div class="countdown-overlay" id="loadingOverlay" style="display: none; flex-direction: column; gap: 1rem;">
-            <div style="width: 48px; height: 48px; border: 4px solid var(--color-primary); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <div style="font-size: 1rem; color: var(--color-text-main);">Gemini AI 옷차림 분석 중...</div>
+          <!-- Gemini AI Loading Overlay -->
+          <div class="countdown-overlay" id="loadingOverlay" style="display: none; flex-direction: column; gap: 1rem; background: rgba(11, 15, 23, 0.85);">
+            <div style="width: 52px; height: 52px; border: 4px solid var(--color-primary); border-top-color: transparent; border-radius: 50%; animation: spin 0.9s linear infinite;"></div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--color-text-main);">Gemini AI 옷차림 분석 중...</div>
+            <div style="font-size: 0.8rem; color: var(--color-primary); font-family: var(--font-mono);">gemini-flash-latest 모델 작동 중</div>
           </div>
         </div>
 
-        <!-- Scan Button -->
-        <button class="btn-scan" id="btnScan">
-          📸 옷차림 스캔 / 촬영
+        <!-- Main Scan Button -->
+        <button class="btn-scan" id="btnScan" style="width: 100%; justify-content: center;">
+          📸 옷차림 스캔 / 촬영 시작
         </button>
       </div>
 
@@ -98,25 +109,37 @@ export class WebcamViewfinderComponent {
   }
 
   triggerFlashAndCapture() {
-    // 1. Create camera flash effect
+    // 1. Camera Flash Animation
     const flashEl = document.createElement('div');
     flashEl.className = 'flash-animation';
     document.body.appendChild(flashEl);
     setTimeout(() => flashEl.remove(), 400);
 
-    // 2. Capture video frame to Base64
+    // 2. Base64 Frame Capture
     const canvas = document.createElement('canvas');
-    canvas.width = this.videoEl.videoWidth || 640;
-    canvas.height = this.videoEl.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
+    if (this.videoEl && this.videoEl.style.display !== 'none') {
+      canvas.width = this.videoEl.videoWidth || 640;
+      canvas.height = this.videoEl.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(this.videoEl, 0, 0, canvas.width, canvas.height);
+    } else {
+      // Use fallback canvas size
+      canvas.width = 640;
+      canvas.height = 480;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#1E293B';
+      ctx.fillRect(0, 0, 640, 480);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '20px Noto Sans KR';
+      ctx.fillText('샘플 옷차림 촬영 캡처', 200, 240);
+    }
     const base64Image = canvas.toDataURL('image/jpeg', 0.85);
 
-    // 3. Show Loading
+    // 3. Show Gemini AI Loading Overlay
     const loadingOverlay = document.getElementById('loadingOverlay');
     if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
-    // 4. Trigger callback to app
+    // 4. Trigger Callback
     if (this.onScanTriggered) {
       this.onScanTriggered(base64Image).finally(() => {
         if (loadingOverlay) loadingOverlay.style.display = 'none';
