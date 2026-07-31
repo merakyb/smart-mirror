@@ -1,86 +1,71 @@
 /**
- * Smart Mirror Assistant - Main Application Entry Point
- * Orchestrates Header, Virtual Indicators, Webcam Viewfinder, Diagnosis Panel, and Outfit Gallery
+ * Smart Mirror Assistant - Step 1 Main Application Entry
+ * Fetches OpenWeatherMap API data using environment variables (.env)
+ * and renders Header, Dot Matrix Indicator, and Weather Summary Report.
  */
 
 import { fetchCurrentWeather } from './services/weatherService.js';
-import { analyzeOutfitWithGemini } from './services/geminiService.js';
-import { fetchRecommendedOutfits } from './services/imageService.js';
-
 import { HeaderComponent } from './components/Header.js';
 import { VirtualIndicatorsComponent } from './components/VirtualIndicators.js';
-import { WebcamViewfinderComponent } from './components/WebcamViewfinder.js';
-import { DiagnosisPanelComponent } from './components/DiagnosisPanel.js';
-import { OutfitGalleryComponent } from './components/OutfitGallery.js';
 
 class SmartMirrorApp {
   constructor() {
     this.weatherData = null;
-    this.diagnosisData = null;
-    this.recommendedOutfits = [];
 
-    // Instantiate UI Components
+    // Instantiate Step 1 Components
     this.header = new HeaderComponent('headerSlot');
     this.indicators = new VirtualIndicatorsComponent('virtualIndicatorsSlot');
-    this.viewfinder = new WebcamViewfinderComponent('viewfinderSlot', (base64Image) => this.handleScan(base64Image));
-    this.diagnosisPanel = new DiagnosisPanelComponent('diagnosisSlot');
-    this.gallery = new OutfitGalleryComponent('gallerySlot');
   }
 
   async init() {
-    console.log('[SmartMirrorApp] Initializing Smart Mirror Assistant Components...');
+    console.log('[SmartMirrorApp] Initializing Step 1: Main Weather Dashboard...');
 
     // 1. Initial Render with Placeholders
-    this.indicators.render();
-    this.viewfinder.render();
-    this.diagnosisPanel.render();
-    this.gallery.render([]);
+    this.header.render(null);
+    this.indicators.render('Clear');
 
-    // 2. Fetch Weather Data
+    // 2. Fetch OpenWeatherMap Weather Data using VITE_OPENWEATHER_API_KEY from .env
     this.weatherData = await fetchCurrentWeather();
-    this.header.render(this.weatherData);
+    
+    // 3. Update Header & Dot Matrix Indicators
+    this.header.updateWeather(this.weatherData);
     this.indicators.updateDotMatrix(this.weatherData.condition);
 
-    // 3. Fetch Initial Outfit Recommendations
-    this.recommendedOutfits = await fetchRecommendedOutfits(this.weatherData.condition, this.weatherData.temp);
-    this.gallery.update(this.recommendedOutfits);
+    // 4. Update Main Weather Detail Cards
+    this.updateWeatherDetailCards(this.weatherData);
   }
 
-  async handleScan(base64Image) {
-    console.log('[SmartMirrorApp] Outfit Scan Triggered. Analyzing with Gemini API...');
+  updateWeatherDetailCards(data) {
+    if (!data) return;
 
-    // 1. Analyze Outfit Image with Gemini Vision
-    this.diagnosisData = await analyzeOutfitWithGemini(base64Image, this.weatherData);
+    const summaryEl = document.getElementById('weatherSummaryText');
+    const tempEl = document.getElementById('detailTemp');
+    const feelsEl = document.getElementById('detailFeels');
+    const humidityEl = document.getElementById('detailHumidity');
+    const cityEl = document.getElementById('detailCityName');
+    const updatedTimeEl = document.getElementById('lastUpdatedTime');
 
-    // 2. Update Diagnosis Panel & Virtual Neopixel LED Indicators
-    this.diagnosisPanel.update(this.diagnosisData);
-    this.indicators.updateNeopixel(this.diagnosisData.colors);
-
-    // 3. Play sound warning if Warning status
-    if (this.diagnosisData.status === 'warning') {
-      this.playWarningBeep();
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        현재 <strong>${data.city}</strong>의 날씨는 <strong>${data.icon} ${data.description}</strong> 상태입니다. 
+        기온은 <strong>${data.temp}°C</strong>이며 체감 온도는 <strong>${data.feelsLike}°C</strong>로 느껴집니다.
+      `;
     }
-  }
 
-  playWarningBeep() {
-    try {
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.3);
-    } catch (e) {
-      console.warn('[SmartMirrorApp] Web Audio Beep fallback:', e);
+    if (tempEl) tempEl.textContent = `${data.temp}°C`;
+    if (feelsEl) feelsEl.textContent = `${data.feelsLike}°C`;
+    if (humidityEl) humidityEl.textContent = `${data.humidity}%`;
+    if (cityEl) cityEl.textContent = data.city;
+
+    if (updatedTimeEl) {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      updatedTimeEl.textContent = `최근 업데이트: ${timeStr}`;
     }
   }
 }
 
-// Start application on DOM ready
+// Initialize Application on DOM Content Loaded
 document.addEventListener('DOMContentLoaded', () => {
   const app = new SmartMirrorApp();
   app.init();

@@ -3,32 +3,100 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant)</title>
+  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant) - 1단계 날씨 조회</title>
   
   <!-- CSS Styles -->
   <link rel="stylesheet" href="css/design-tokens.css" />
   <link rel="stylesheet" href="css/components.css" />
 </head>
 <body>
-  <div style="max-width: 1200px; margin: 0 auto; padding: 1.5rem;">
+  <div style="max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem;">
     
-    <!-- 1. Header Component Slot -->
-    <div id="headerSlot"></div>
+    <!-- 1. Header Component Slot (Clock, City, Weather Temp & Icon) -->
+    <div id="headerSlot" style="margin-bottom: 1.5rem;"></div>
 
-    <!-- 2. Virtual Hardware Indicators Slot -->
+    <!-- 2. Virtual Hardware Indicators Slot (8x8 Dot Matrix) -->
     <div id="virtualIndicatorsSlot" style="margin-bottom: 1.5rem;"></div>
 
-    <!-- 3. Main Split Content (Webcam Viewfinder & AI Diagnosis) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-      <!-- Left Panel: Webcam Viewfinder -->
-      <div id="viewfinderSlot"></div>
+    <!-- 3. Weather Main Details Grid (Step 1 Core UI) -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+      
+      <!-- Weather Info Main Glass Panel -->
+      <div class="glass-panel animate-fade-in" style="padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+              <span>🌤️</span> 실시간 기상 상태 요약 리포트
+            </h2>
+            <span class="pill-badge badge-good" style="font-family: var(--font-mono); font-size: 0.75rem;">
+              OpenWeatherMap API Live
+            </span>
+          </div>
 
-      <!-- Right Panel: AI Outfit Diagnosis & Swatch -->
-      <div id="diagnosisSlot"></div>
+          <p style="font-size: 1rem; color: var(--color-text-main); line-height: 1.6; margin-bottom: 1.5rem;" id="weatherSummaryText">
+            날씨 데이터를 로딩하고 있습니다...
+          </p>
+
+          <!-- Weather Metrics Grid -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+            <div class="glass-card" style="text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">현재 기온</div>
+              <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--color-primary);" id="detailTemp">--°C</div>
+            </div>
+            <div class="glass-card" style="text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">체감 온도</div>
+              <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--color-secondary);" id="detailFeels">--°C</div>
+            </div>
+            <div class="glass-card" style="text-align: center;">
+              <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">현재 습도</div>
+              <div style="font-family: var(--font-mono); font-size: 1.75rem; font-weight: 700; color: var(--color-accent);" id="detailHumidity">--%</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-glass-border); pt-3;">
+          <span>📍 측정 위치: <strong id="detailCityName" style="color: var(--color-text-main);">서울 (대한민국)</strong></span>
+          <span style="font-family: var(--font-mono);" id="lastUpdatedTime">최근 업데이트: --:--:--</span>
+        </div>
+      </div>
+
+      <!-- Step Roadmap & Notice Glass Panel -->
+      <div class="glass-panel animate-fade-in" style="padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--color-text-main); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span>🚀</span> 프로젝트 진행 단계
+          </h3>
+
+          <div style="display: flex; flex-direction: column; gap: 0.875rem;">
+            <div class="glass-card" style="border-left: 3px solid var(--color-success); background: rgba(16, 185, 129, 0.1);">
+              <div style="font-weight: 700; font-size: 0.875rem; color: var(--color-success);">[1단계] 메인 화면 & 날씨 조회</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.2rem;">
+                OpenWeatherMap API 연동 완료 (현재 활성화)
+              </div>
+            </div>
+
+            <div class="glass-card" style="opacity: 0.5;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--color-text-muted);">[2단계] 웹캠 촬영 & AI 옷차림 분석</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 0.2rem;">
+                다음 단계 준비 중
+              </div>
+            </div>
+
+            <div class="glass-card" style="opacity: 0.5;">
+              <div style="font-weight: 600; font-size: 0.875rem; color: var(--color-text-muted);">[3단계] 아두이노 부품 제어</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim); margin-top: 0.2rem;">
+                하드웨어 확장 단계
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--color-text-dim); text-align: center;">
+          🔒 API Key는 .env 환경변수로 안전하게 보호됩니다.
+        </div>
+      </div>
+
     </div>
-
-    <!-- 4. Outfit Recommendation Gallery Slot -->
-    <div id="gallerySlot"></div>
 
   </div>
 

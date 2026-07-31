@@ -1,6 +1,6 @@
 /**
- * Header Component
- * Renders digital clock, location, and current weather widget
+ * Header Component (Step 1)
+ * Renders real-time digital clock, location, and OpenWeatherMap weather display
  */
 
 export class HeaderComponent {
@@ -12,28 +12,41 @@ export class HeaderComponent {
   render(weatherData) {
     if (!this.container) return;
 
+    const data = weatherData || {
+      city: '서울 (대한민국)',
+      temp: '--',
+      feelsLike: '--',
+      condition: 'Clear',
+      humidity: '--',
+      description: '날씨 정보를 불러오는 중...',
+      icon: '🌤️'
+    };
+
     this.container.innerHTML = `
-      <header class="header-container glass-panel">
-        <!-- Digital Clock & City -->
+      <header class="header-container glass-panel animate-fade-in">
+        <!-- Left: Digital Clock & City -->
         <div>
           <div class="clock-display" id="mirrorClock">00:00:00</div>
-          <div style="font-size: 0.875rem; color: var(--color-text-muted); margin-top: 0.25rem;">
-            📍 <span id="mirrorCity">${weatherData ? weatherData.city : '위치 로딩 중...'}</span>
+          <div style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>📍</span> <span id="mirrorCity">${data.city}</span>
           </div>
         </div>
 
-        <!-- Weather Widget -->
+        <!-- Right: OpenWeatherMap Weather Display -->
         <div class="weather-widget">
           <div class="weather-icon-badge" id="mirrorWeatherIcon">
-            ${weatherData ? weatherData.icon : '☀️'}
+            ${data.icon}
           </div>
           <div>
-            <div class="weather-temp" id="mirrorTemp">
-              ${weatherData ? `${weatherData.temp}°C` : '--°C'}
+            <div style="display: flex; align-items: baseline; gap: 0.75rem;">
+              <span class="weather-temp" id="mirrorTemp">${data.temp}°C</span>
+              <span class="pill-badge badge-good" id="mirrorWeatherDesc" style="font-size: 0.8rem;">
+                ${data.description}
+              </span>
             </div>
-            <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: var(--font-mono);">
-              체감: <span id="mirrorFeelsLike">${weatherData ? weatherData.feelsLike : '--'}</span>°C | 
-              습도: <span id="mirrorHumidity">${weatherData ? weatherData.humidity : '--'}</span>%
+            <div style="font-size: 0.8rem; color: var(--color-text-muted); font-family: var(--font-mono); margin-top: 0.25rem;">
+              체감 온도: <span id="mirrorFeelsLike" style="color: var(--color-primary);">${data.feelsLike}</span>°C | 
+              습도: <span id="mirrorHumidity" style="color: var(--color-secondary);">${data.humidity}</span>%
             </div>
           </div>
         </div>
@@ -43,18 +56,21 @@ export class HeaderComponent {
     this.startClock();
   }
 
-  updateWeather(weatherData) {
+  updateWeather(data) {
+    if (!data) return;
     const cityEl = document.getElementById('mirrorCity');
     const iconEl = document.getElementById('mirrorWeatherIcon');
     const tempEl = document.getElementById('mirrorTemp');
+    const descEl = document.getElementById('mirrorWeatherDesc');
     const feelsEl = document.getElementById('mirrorFeelsLike');
     const humidityEl = document.getElementById('mirrorHumidity');
 
-    if (cityEl) cityEl.textContent = weatherData.city;
-    if (iconEl) iconEl.textContent = weatherData.icon;
-    if (tempEl) tempEl.textContent = `${weatherData.temp}°C`;
-    if (feelsEl) feelsEl.textContent = weatherData.feelsLike;
-    if (humidityEl) humidityEl.textContent = weatherData.humidity;
+    if (cityEl) cityEl.textContent = data.city;
+    if (iconEl) iconEl.textContent = data.icon;
+    if (tempEl) tempEl.textContent = `${data.temp}°C`;
+    if (descEl) descEl.textContent = data.description;
+    if (feelsEl) feelsEl.textContent = data.feelsLike;
+    if (humidityEl) humidityEl.textContent = data.humidity;
   }
 
   startClock() {
