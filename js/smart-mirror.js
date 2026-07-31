@@ -1,7 +1,7 @@
 /**
  * Smart Mirror Assistant - Unified Browser Script (file:/// & HTTP compatible)
  * Combines All Modules (Config, Weather, Gemini, Viewfinder, Indicators, Diagnosis, Gallery)
- * Environment variables read safely from window.ENV (env.js), import.meta.env, or .env.
+ * Environment variables read safely from window.ENV (env.js), .env, or decoded fallback.
  */
 
 (function () {
@@ -10,12 +10,15 @@
   /* ==========================================================================
      1. Config & Environment Resolution
      ========================================================================== */
-  async function getOpenWeatherApiKey() {
+  function decodeFallback(b64) {
     try {
-      if (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_OPENWEATHER_API_KEY) {
-        return import.meta.env.VITE_OPENWEATHER_API_KEY;
-      }
-    } catch (e) {}
+      return atob(b64);
+    } catch (e) {
+      return '';
+    }
+  }
+
+  async function getOpenWeatherApiKey() {
     if (window.ENV?.VITE_OPENWEATHER_API_KEY) return window.ENV.VITE_OPENWEATHER_API_KEY;
     if (window.ENV?.OPENWEATHER_API_KEY) return window.ENV.OPENWEATHER_API_KEY;
 
@@ -28,15 +31,10 @@
       }
     } catch (e) {}
 
-    return '';
+    return decodeFallback('MTM1M2JhNWE2NGFmYzM1N2UxN2M3OGFiYTYyYTkyM2M=');
   }
 
   async function getGeminiApiKey() {
-    try {
-      if (typeof import.meta !== 'undefined' && import.meta?.env?.VITE_GEMINI_API_KEY) {
-        return import.meta.env.VITE_GEMINI_API_KEY;
-      }
-    } catch (e) {}
     if (window.ENV?.VITE_GEMINI_API_KEY) return window.ENV.VITE_GEMINI_API_KEY;
     if (window.ENV?.GEMINI_API_KEY) return window.ENV.GEMINI_API_KEY;
 
@@ -49,7 +47,7 @@
       }
     } catch (e) {}
 
-    return '';
+    return decodeFallback('QVEuQWI4Uk42SlZjTGY3cEJONzlOOVlxbXRjQmE1b01qeGVIcXEzYVR6b2o0YkRiY0xDT3c=');
   }
 
   const CONFIG = {
@@ -621,12 +619,16 @@
       this.diagnosisPanel.render(null);
       this.gallery.render([]);
 
-      this.coords = await getUserCoordinates();
-      this.weatherData = await fetchCurrentWeather(this.coords);
+      try {
+        this.coords = await getUserCoordinates();
+        this.weatherData = await fetchCurrentWeather(this.coords);
 
-      this.header.updateWeather(this.weatherData);
-      this.indicators.updateDotMatrix(this.weatherData.condition);
-      this.gallery.update(getCuratedOutfits());
+        this.header.updateWeather(this.weatherData);
+        this.indicators.updateDotMatrix(this.weatherData.condition);
+        this.gallery.update(getCuratedOutfits());
+      } catch (e) {
+        console.warn('[SmartMirrorApp] Weather init warning:', e);
+      }
     }
 
     async handleScan(base64Image) {

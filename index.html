@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant) - 2단계 AI 옷차림 분석</title>  
+  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant)</title>  
   
   <!-- Environment Variables Script (Local dev fallback ignored by Git) -->
-  <script src="env.js"></script>
+  <script src="env.js" onerror="console.log('env.js not found, using fallback')"></script>
 
   <!-- CSS Styles -->
   <link rel="stylesheet" href="css/design-tokens.css" />
@@ -15,23 +15,187 @@
 <body>
   <div style="max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem;">
     
-    <!-- 1. Header Component Slot (Clock, Location, Weather Status) -->
-    <div id="headerSlot" style="margin-bottom: 1.5rem;"></div>
+    <!-- 1. Header Component -->
+    <div id="headerSlot" style="margin-bottom: 1.5rem;">
+      <header class="header-container glass-panel animate-fade-in">
+        <div>
+          <div class="clock-display" id="mirrorClock">14:30:00</div>
+          <div style="font-size: 0.9rem; color: var(--color-text-muted); margin-top: 0.35rem;">
+            📍 <span id="mirrorCity">서울 (대한민국)</span>
+          </div>
+        </div>
+        <div class="weather-widget">
+          <div class="weather-icon-badge" id="mirrorWeatherIcon">☀️</div>
+          <div>
+            <div style="display: flex; align-items: baseline; gap: 0.75rem;">
+              <span class="weather-temp" id="mirrorTemp">27°C</span>
+              <span class="pill-badge badge-good" id="mirrorWeatherDesc" style="font-size: 0.8rem;">맑음</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--color-text-muted); font-family: var(--font-mono); margin-top: 0.25rem;">
+              체감: <span id="mirrorFeelsLike" style="color: var(--color-primary);">29</span>°C | 
+              습도: <span id="mirrorHumidity" style="color: var(--color-secondary);">55</span>%
+            </div>
+          </div>
+        </div>
+      </header>
+    </div>
 
-    <!-- 2. Virtual Hardware Indicators Slot (Dot Matrix & Neopixel Bar) -->
-    <div id="virtualIndicatorsSlot" style="margin-bottom: 1.5rem;"></div>
+    <!-- 2. Virtual Hardware Indicators -->
+    <div id="virtualIndicatorsSlot" style="margin-bottom: 1.5rem;">
+      <div class="glass-card virtual-indicator-panel animate-fade-in" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div class="dot-matrix-grid" id="dotMatrixGrid">
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel active-sun"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+            <div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div><div class="dot-pixel"></div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-primary);">📟 8x8 LED 도트매트릭스 (날씨 상태)</div>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: var(--font-mono); margin-top: 0.2rem;">
+              현재 기상 프로토콜: <span id="dotMatrixStatus" style="color: var(--color-text-main);">Clear</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+          <div style="text-align: right;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-secondary);">🌈 4-세그먼트 네오픽셀 LED 바 (코디 색상)</div>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted); font-family: var(--font-mono); margin-top: 0.2rem;" id="neopixelStatus">
+              [외투 - 상의 - 하의 - 신발] LED 발광 동기화
+            </div>
+          </div>
+          <div class="neopixel-bar" style="padding: 0.5rem 0.75rem;">
+            <div class="neopixel-led neopixel-led-active" id="neoCoat" title="외투 LED" style="background-color: #1E293B; box-shadow: 0 0 14px #1E293B;"></div>
+            <div class="neopixel-led neopixel-led-active" id="neoTop" title="상의 LED" style="background-color: #F8FAFC; box-shadow: 0 0 14px #F8FAFC;"></div>
+            <div class="neopixel-led neopixel-led-active" id="neoBottom" title="하의 LED" style="background-color: #38BDF8; box-shadow: 0 0 14px #38BDF8;"></div>
+            <div class="neopixel-led neopixel-led-active" id="neoShoes" title="신발 LED" style="background-color: #0F172A; box-shadow: 0 0 14px #0F172A;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- 3. Main Split Content: Left (Webcam Viewfinder) | Right (AI Diagnosis Panel) -->
+    <!-- 3. Main Split Content (Webcam Viewfinder & AI Diagnosis Panel) -->
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-      <!-- Left Panel: Webcam Viewfinder & Scan Button -->
-      <div id="viewfinderSlot"></div>
+      
+      <!-- Left Panel: Webcam Viewfinder -->
+      <div id="viewfinderSlot">
+        <div class="glass-panel animate-fade-in" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; align-items: center; width: 100%;">
+          <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
+              <span>📷</span> 거울 뷰파인더 (실시간 웹캠)
+            </h3>
+            <span class="pill-badge badge-good" style="font-size: 0.7rem; font-family: var(--font-mono);">LIVE WEBCAM</span>
+          </div>
+          <div class="viewfinder-box" id="viewfinderBox">
+            <video id="mirrorVideo" class="viewfinder-video" autoplay playsinline muted></video>
+            <div class="viewfinder-overlay"></div>
+            <div class="scanline-effect"></div>
+            <div class="countdown-overlay" id="countdownOverlay" style="display: none;">3</div>
+            <div class="countdown-overlay" id="loadingOverlay" style="display: none; flex-direction: column; gap: 1rem; background: rgba(11, 15, 23, 0.85);">
+              <div style="width: 52px; height: 52px; border: 4px solid var(--color-primary); border-top-color: transparent; border-radius: 50%; animation: spin 0.9s linear infinite;"></div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--color-text-main);">Gemini AI 옷차림 분석 중...</div>
+            </div>
+          </div>
+          <button class="btn-scan" id="btnScan" style="width: 100%; justify-content: center;">
+            📸 옷차림 스캔 / 촬영 시작
+          </button>
+        </div>
+      </div>
 
-      <!-- Right Panel: AI Diagnosis Pill Badge, Feedback & 4-Color Swatch -->
-      <div id="diagnosisSlot"></div>
+      <!-- Right Panel: AI Diagnosis Panel -->
+      <div id="diagnosisSlot">
+        <div class="glass-panel animate-fade-in" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+          <div>
+            <span class="pill-badge badge-good" id="diagnosisBadge">
+              🟢 [Good] 날씨 맞춤 적절한 옷차림
+            </span>
+          </div>
+          <div class="glass-card">
+            <div style="font-size: 0.8rem; color: var(--color-primary); font-family: var(--font-mono); margin-bottom: 0.5rem;">
+              🤖 GEMINI AI 패션 진단 피드백
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.6; color: var(--color-text-main);" id="diagnosisFeedback">
+              스캔 버튼을 눌러 옷차림을 촬영하면 Google Gemini AI가 현재 날씨 대비 옷차림 적합도와 4가지 아이템 대표 색상을 진단합니다.
+            </p>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.5rem;">
+              🎨 추천 코디 4가지 대표 색상 칩 (Hex)
+            </div>
+            <div class="palette-grid">
+              <div class="swatch-card">
+                <div class="swatch-circle" id="swatchCoat" style="background-color: #1E293B; box-shadow: 0 0 10px #1E293B;"></div>
+                <span class="swatch-label">외투</span>
+                <span class="swatch-hex" id="hexCoat">#1E293B</span>
+              </div>
+              <div class="swatch-card">
+                <div class="swatch-circle" id="swatchTop" style="background-color: #F8FAFC; box-shadow: 0 0 10px #F8FAFC;"></div>
+                <span class="swatch-label">상의</span>
+                <span class="swatch-hex" id="hexTop">#F8FAFC</span>
+              </div>
+              <div class="swatch-card">
+                <div class="swatch-circle" id="swatchBottom" style="background-color: #38BDF8; box-shadow: 0 0 10px #38BDF8;"></div>
+                <span class="swatch-label">하의</span>
+                <span class="swatch-hex" id="hexBottom">#38BDF8</span>
+              </div>
+              <div class="swatch-card">
+                <div class="swatch-circle" id="swatchShoes" style="background-color: #0F172A; box-shadow: 0 0 10px #0F172A;"></div>
+                <span class="swatch-label">신발</span>
+                <span class="swatch-hex" id="hexShoes">#0F172A</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- 4. Outfit Recommendation Gallery Slot -->
-    <div id="gallerySlot"></div>
+    <div id="gallerySlot">
+      <div class="glass-panel animate-fade-in" style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--color-primary);">
+            ✨ 오늘 날씨 추천 스타일 갤러리
+          </h3>
+          <span style="font-size: 0.75rem; color: var(--color-text-muted); font-family: var(--font-mono);">
+            CURATED OUTFIT RECOMMENDATIONS
+          </span>
+        </div>
+        <div class="outfit-gallery-grid">
+          <div class="outfit-card animate-fade-in">
+            <div class="outfit-img-box">
+              <img src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=600&q=80" alt="린넨 셔츠" class="outfit-img" loading="lazy" />
+            </div>
+            <div class="outfit-info">
+              <div class="outfit-title">린넨 셔츠 & 슬랙스 코디</div>
+              <div class="outfit-desc">통기성이 우수하며 깔끔한 데일리 룩</div>
+            </div>
+          </div>
+          <div class="outfit-card animate-fade-in">
+            <div class="outfit-img-box">
+              <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80" alt="코튼 반팔" class="outfit-img" loading="lazy" />
+            </div>
+            <div class="outfit-info">
+              <div class="outfit-title">캐주얼 코튼 반팔 룩</div>
+              <div class="outfit-desc">자연스러운 시원함을 제공하는 캐주얼 핏</div>
+            </div>
+          </div>
+          <div class="outfit-card animate-fade-in">
+            <div class="outfit-img-box">
+              <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80" alt="미니멀리스트" class="outfit-img" loading="lazy" />
+            </div>
+            <div class="outfit-info">
+              <div class="outfit-title">라이트 미니멀리스트 피팅</div>
+              <div class="outfit-desc">밝은 톤의 샌들 및 숏팬츠 매칭 스타일</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 
