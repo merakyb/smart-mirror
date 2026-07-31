@@ -1,16 +1,24 @@
 /**
  * Weather Service
- * Fetches real-time weather from OpenWeatherMap API
+ * Fetches real-time weather from OpenWeatherMap API using async API key resolution
  */
 
-import { CONFIG, MOCK_DATA } from '../config.js';
+import { CONFIG, getOpenWeatherApiKey } from '../config.js';
 
 export async function fetchCurrentWeather(city = CONFIG.CITY) {
-  const apiKey = CONFIG.OPENWEATHER_API_KEY;
+  const apiKey = await getOpenWeatherApiKey();
 
   if (!apiKey) {
-    console.warn('[WeatherService] API Key missing in environment variables. Using Mock Data.');
-    return MOCK_DATA.WEATHER;
+    console.warn('[WeatherService] API Key missing in environment variables.');
+    return {
+      city: '서울 (API Key 필요)',
+      temp: '--',
+      feelsLike: '--',
+      condition: 'Clear',
+      humidity: '--',
+      description: 'API Key를 불러올 수 없습니다. .env 또는 env.js 설정을 확인하세요.',
+      icon: '⚠️'
+    };
   }
 
   try {
@@ -42,6 +50,14 @@ export async function fetchCurrentWeather(city = CONFIG.CITY) {
     };
   } catch (error) {
     console.error('[WeatherService] Failed to fetch live weather:', error);
-    return MOCK_DATA.WEATHER;
+    return {
+      city: '서울 (대한민국)',
+      temp: '--',
+      feelsLike: '--',
+      condition: 'Clear',
+      humidity: '--',
+      description: `날씨 조회 실패: ${error.message}`,
+      icon: '❌'
+    };
   }
 }

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>🪞 스마트 거울 비서 (Smart Mirror Assistant) - 1단계 날씨 조회</title>
   
+  <!-- Environment Variables Script (Local dev fallback ignored by Git) -->
+  <script src="env.js"></script>
+
   <!-- CSS Styles -->
   <link rel="stylesheet" href="css/design-tokens.css" />
   <link rel="stylesheet" href="css/components.css" />
@@ -71,7 +74,7 @@
             <div class="glass-card" style="border-left: 3px solid var(--color-success); background: rgba(16, 185, 129, 0.1);">
               <div style="font-weight: 700; font-size: 0.875rem; color: var(--color-success);">[1단계] 메인 화면 & 날씨 조회</div>
               <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.2rem;">
-                OpenWeatherMap API 연동 완료 (현재 활성화)
+                OpenWeatherMap API 연동 완료 (실시간 활성화)
               </div>
             </div>
 
@@ -92,7 +95,7 @@
         </div>
 
         <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--color-text-dim); text-align: center;">
-          🔒 API Key는 .env 환경변수로 안전하게 보호됩니다.
+          🔒 API Key는 .env 및 env.js 파일로 안전하게 관리됩니다.
         </div>
       </div>
 
