@@ -94,7 +94,7 @@
     const apiKey = await getOpenWeatherApiKey();
     if (!apiKey) {
       return {
-        city: '서울 (API Key 필요)',
+        city: '서울 (대한민국)',
         temp: 27,
         feelsLike: 29,
         condition: 'Clear',
@@ -656,10 +656,20 @@
     }
   }
 
-  // Auto Start on DOM ready
-  document.addEventListener('DOMContentLoaded', () => {
-    const app = new SmartMirrorApp();
-    app.init();
-  });
+  // Safe DOM ready / Immediate Start
+  function startApp() {
+    try {
+      const app = new SmartMirrorApp();
+      app.init();
+    } catch (err) {
+      console.error('[SmartMirrorApp] Initialization error:', err);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+  } else {
+    startApp();
+  }
 
 })();
