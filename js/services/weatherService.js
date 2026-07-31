@@ -1,14 +1,15 @@
 /**
  * Weather Service
- * Fetches real-time weather from OpenWeatherMap API based on HTML5 Geolocation coordinates or fallback city.
+ * Resolves user position using Browser Geolocation OR Automatic IP-based Geolocation (geojs.io)
+ * so that location is detected EVEN IF browser permission popups are blocked or file:// protocol is used.
  */
 
 import { CONFIG, getOpenWeatherApiKey } from '../config.js';
 
-export function getUserCoordinates() {
-  return new Promise((resolve) => {
+export async function getUserCoordinates() {
+  // 1. Try Browser GPS Geolocation (with 3-second quick timeout)
+  const gpsCoords = await new Promise((resolve) => {
     if (!navigator.geolocation) {
-      console.warn('[WeatherService] Geolocation API not supported by browser.');
       resolve(null);
       return;
     }
@@ -21,12 +22,37 @@ export function getUserCoordinates() {
         });
       },
       (error) => {
-        console.warn('[WeatherService] Geolocation denied or timed out:', error.message);
+        console.warn('[WeatherService] Browser GPS notice (blocked/timeout):', error.message);
         resolve(null);
       },
-      { timeout: 7000, maximumAge: 300000 }
+      { timeout: 3000, maximumAge: 300000 }
     );
   });
+
+  if (gpsCoords) {
+    console.log(`[WeatherService] GPS Position Acquired: Lat ${gpsCoords.lat}, Lon ${gpsCoords.lon}`);
+    return gpsCoords;
+  }
+
+  // 2. Fallback: Automatic IP-based Geolocation (Works without browser permission popups)
+  try {
+    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.latitude && data.longitude) {
+        console.log(`[WeatherService] IP Geolocation Acquired: ${data.city} (${data.latitude}, ${data.longitude})`);
+        return {
+          lat: parseFloat(data.latitude),
+          lon: parseFloat(data.longitude),
+          cityName: data.city
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('[WeatherService] IP Geolocation failed:', e);
+  }
+
+  return null;
 }
 
 export async function fetchCurrentWeather(coords = null) {
@@ -69,7 +95,7 @@ export async function fetchCurrentWeather(coords = null) {
     else if (weatherCondition === 'Thunderstorm') icon = '⛈️';
     else if (weatherCondition === 'Mist' || weatherCondition === 'Fog') icon = '🌫️';
 
-    const locationName = data.name || CONFIG.CITY;
+    const locationName = data.name || coords?.cityName || CONFIG.CITY;
     const countryName = data.sys?.country ? ` (${data.sys.country})` : '';
 
     return {
