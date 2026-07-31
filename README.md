@@ -1,1 +1,1 @@
-# smart-mirror
+# Smart - Mirror Web
