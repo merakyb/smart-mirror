@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Smart Mirror Assistant - Design Tokens & Core Variables
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  /* Background & Glass Surfaces */
+  --color-bg-base: #0B0F17;
+  --color-glass-bg: rgba(15, 23, 42, 0.65);
+  --color-glass-surface: rgba(30, 41, 59, 0.5);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
+  --color-glass-hover: rgba(30, 41, 59, 0.85);
+
+  /* Primary Accent & Glow */
+  --color-primary: #38BDF8;
+  --color-primary-glow: rgba(56, 189, 248, 0.4);
+  --color-secondary: #60A5FA;
+  --color-accent: #A855F7;
+
+  /* Semantic State Colors */
+  --color-success: #10B981;
+  --color-success-glow: rgba(16, 185, 129, 0.4);
+  --color-warning: #F43F5E;
+  --color-warning-glow: rgba(244, 63, 94, 0.4);
+  --color-notice: #F59E0B;
+
+  /* Text Colors */
+  --color-text-main: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-text-dim: #64748B;
+
+  /* Typography Families */
+  --font-sans: 'Noto Sans KR', 'Roboto', sans-serif;
+  --font-mono: 'Roboto Mono', monospace;
+
+  /* Layout & Spacing Tokens */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+
+  /* Glassmorphism Effects */
+  --backdrop-blur: blur(16px);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Global Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+}

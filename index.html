@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant)</title>
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="css/design-tokens.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+  <div style="max-width: 1200px; margin: 0 auto; padding: 1.5rem;">
+    
+    <!-- 1. Header Component Slot -->
+    <div id="headerSlot"></div>
+
+    <!-- 2. Virtual Hardware Indicators Slot -->
+    <div id="virtualIndicatorsSlot" style="margin-bottom: 1.5rem;"></div>
+
+    <!-- 3. Main Split Content (Webcam Viewfinder & AI Diagnosis) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+      <!-- Left Panel: Webcam Viewfinder -->
+      <div id="viewfinderSlot"></div>
+
+      <!-- Right Panel: AI Outfit Diagnosis & Swatch -->
+      <div id="diagnosisSlot"></div>
+    </div>
+
+    <!-- 4. Outfit Recommendation Gallery Slot -->
+    <div id="gallerySlot"></div>
+
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
