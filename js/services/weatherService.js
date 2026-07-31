@@ -1,17 +1,41 @@
 /**
  * Weather Service
- * Fetches real-time weather from OpenWeatherMap API using async API key resolution
+ * Fetches real-time weather from OpenWeatherMap API based on HTML5 Geolocation coordinates or fallback city.
  */
 
 import { CONFIG, getOpenWeatherApiKey } from '../config.js';
 
-export async function fetchCurrentWeather(city = CONFIG.CITY) {
+export function getUserCoordinates() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      console.warn('[WeatherService] Geolocation API not supported by browser.');
+      resolve(null);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude
+        });
+      },
+      (error) => {
+        console.warn('[WeatherService] Geolocation denied or timed out:', error.message);
+        resolve(null);
+      },
+      { timeout: 7000, maximumAge: 300000 }
+    );
+  });
+}
+
+export async function fetchCurrentWeather(coords = null) {
   const apiKey = await getOpenWeatherApiKey();
 
   if (!apiKey) {
     console.warn('[WeatherService] API Key missing in environment variables.');
     return {
-      city: '서울 (API Key 필요)',
+      city: '위치 정보 (API Key 필요)',
       temp: '--',
       feelsLike: '--',
       condition: 'Clear',
@@ -22,7 +46,13 @@ export async function fetchCurrentWeather(city = CONFIG.CITY) {
   }
 
   try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},${CONFIG.COUNTRY_CODE}&appid=${apiKey}&units=metric&lang=kr`;
+    let url = '';
+    if (coords && coords.lat && coords.lon) {
+      url = `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.lon}&appid=${apiKey}&units=metric&lang=kr`;
+    } else {
+      url = `https://api.openweathermap.org/data/2.5/weather?q=${CONFIG.CITY},${CONFIG.COUNTRY_CODE}&appid=${apiKey}&units=metric&lang=kr`;
+    }
+
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -39,8 +69,11 @@ export async function fetchCurrentWeather(city = CONFIG.CITY) {
     else if (weatherCondition === 'Thunderstorm') icon = '⛈️';
     else if (weatherCondition === 'Mist' || weatherCondition === 'Fog') icon = '🌫️';
 
+    const locationName = data.name || CONFIG.CITY;
+    const countryName = data.sys?.country ? ` (${data.sys.country})` : '';
+
     return {
-      city: `${data.name} (대한민국)`,
+      city: `${locationName}${countryName}`,
       temp: Math.round(data.main.temp),
       feelsLike: Math.round(data.main.feels_like),
       condition: weatherCondition,
@@ -51,7 +84,7 @@ export async function fetchCurrentWeather(city = CONFIG.CITY) {
   } catch (error) {
     console.error('[WeatherService] Failed to fetch live weather:', error);
     return {
-      city: '서울 (대한민국)',
+      city: '위치 정보',
       temp: '--',
       feelsLike: '--',
       condition: 'Clear',

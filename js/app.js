@@ -1,16 +1,17 @@
 /**
  * Smart Mirror Assistant - Step 1 Main Application Entry
- * Fetches OpenWeatherMap API data using environment variables (.env)
+ * Fetches OpenWeatherMap API data based on current Geolocation or fallback city
  * and renders Header, Dot Matrix Indicator, and Weather Summary Report.
  */
 
-import { fetchCurrentWeather } from './services/weatherService.js';
+import { fetchCurrentWeather, getUserCoordinates } from './services/weatherService.js';
 import { HeaderComponent } from './components/Header.js';
 import { VirtualIndicatorsComponent } from './components/VirtualIndicators.js';
 
 class SmartMirrorApp {
   constructor() {
     this.weatherData = null;
+    this.coords = null;
 
     // Instantiate Step 1 Components
     this.header = new HeaderComponent('headerSlot');
@@ -18,20 +19,45 @@ class SmartMirrorApp {
   }
 
   async init() {
-    console.log('[SmartMirrorApp] Initializing Step 1: Main Weather Dashboard...');
+    console.log('[SmartMirrorApp] Initializing Step 1: Geolocation Weather Dashboard...');
 
     // 1. Initial Render with Placeholders
     this.header.render(null);
     this.indicators.render('Clear');
 
-    // 2. Fetch OpenWeatherMap Weather Data using VITE_OPENWEATHER_API_KEY from .env
-    this.weatherData = await fetchCurrentWeather();
+    // 2. Fetch User Geolocation Coordinates (if permission granted)
+    this.coords = await getUserCoordinates();
+    if (this.coords) {
+      console.log(`[SmartMirrorApp] Detected User Coordinates: Lat ${this.coords.lat}, Lon ${this.coords.lon}`);
+    } else {
+      console.log('[SmartMirrorApp] Using Fallback City Location (Seoul)');
+    }
+
+    // 3. Fetch Weather Data for Coordinates
+    await this.refreshWeather();
+
+    // 4. Bind Refresh Button Event Handler
+    const btnRefresh = document.getElementById('btnRefreshLocation');
+    if (btnRefresh) {
+      btnRefresh.addEventListener('click', async () => {
+        btnRefresh.disabled = true;
+        btnRefresh.textContent = '🔄 위치 수신 중...';
+        this.coords = await getUserCoordinates();
+        await this.refreshWeather();
+        btnRefresh.disabled = false;
+        btnRefresh.textContent = '🎯 내 현재 위치 날씨 감지';
+      });
+    }
+  }
+
+  async refreshWeather() {
+    this.weatherData = await fetchCurrentWeather(this.coords);
     
-    // 3. Update Header & Dot Matrix Indicators
+    // Update Header & Dot Matrix Indicators
     this.header.updateWeather(this.weatherData);
     this.indicators.updateDotMatrix(this.weatherData.condition);
 
-    // 4. Update Main Weather Detail Cards
+    // Update Main Weather Detail Cards
     this.updateWeatherDetailCards(this.weatherData);
   }
 

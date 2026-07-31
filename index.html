@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant) - 1단계 날씨 조회</title>
+  <title>🪞 스마트 거울 비서 (Smart Mirror Assistant) - 현재 위치 날씨</title>
   
   <!-- Environment Variables Script (Local dev fallback ignored by Git) -->
   <script src="env.js"></script>
@@ -29,15 +29,15 @@
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
             <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 0.5rem;">
-              <span>🌤️</span> 실시간 기상 상태 요약 리포트
+              <span>🌤️</span> 현재 위치 기반 실시간 기상 리포트
             </h2>
-            <span class="pill-badge badge-good" style="font-family: var(--font-mono); font-size: 0.75rem;">
-              OpenWeatherMap API Live
-            </span>
+            <button id="btnRefreshLocation" class="btn-scan" style="font-size: 0.75rem; padding: 0.4rem 1rem;">
+              🎯 내 현재 위치 날씨 감지
+            </button>
           </div>
 
           <p style="font-size: 1rem; color: var(--color-text-main); line-height: 1.6; margin-bottom: 1.5rem;" id="weatherSummaryText">
-            날씨 데이터를 로딩하고 있습니다...
+            현재 위치(GPS) 및 날씨 데이터를 로딩하고 있습니다...
           </p>
 
           <!-- Weather Metrics Grid -->
@@ -57,8 +57,8 @@
           </div>
         </div>
 
-        <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-glass-border); pt-3;">
-          <span>📍 측정 위치: <strong id="detailCityName" style="color: var(--color-text-main);">서울 (대한민국)</strong></span>
+        <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--color-text-muted); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-glass-border); padding-top: 0.75rem;">
+          <span>📍 감지된 위치: <strong id="detailCityName" style="color: var(--color-text-main);">위치 수신 중...</strong></span>
           <span style="font-family: var(--font-mono);" id="lastUpdatedTime">최근 업데이트: --:--:--</span>
         </div>
       </div>
@@ -72,9 +72,9 @@
 
           <div style="display: flex; flex-direction: column; gap: 0.875rem;">
             <div class="glass-card" style="border-left: 3px solid var(--color-success); background: rgba(16, 185, 129, 0.1);">
-              <div style="font-weight: 700; font-size: 0.875rem; color: var(--color-success);">[1단계] 메인 화면 & 날씨 조회</div>
+              <div style="font-weight: 700; font-size: 0.875rem; color: var(--color-success);">[1단계] 위치 기반 날씨 조회</div>
               <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.2rem;">
-                OpenWeatherMap API 연동 완료 (실시간 활성화)
+                GPS 좌표 & OpenWeatherMap 연동 완료
               </div>
             </div>
 
@@ -95,7 +95,7 @@
         </div>
 
         <div style="margin-top: 1rem; font-size: 0.75rem; color: var(--color-text-dim); text-align: center;">
-          🔒 API Key는 .env 및 env.js 파일로 안전하게 관리됩니다.
+          📍 위치 정보는 동의 시 브라우저에서만 실시간으로 조회됩니다.
         </div>
       </div>
 
